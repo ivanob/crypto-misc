@@ -10,3 +10,10 @@ time it will dissapear, as it would happen with lost messages in a network.
 
 The nodes just have to connect to that exchange and publish a message with the transaction they want
 to mine and it will be broadcasted to all the miners listening.
+
+
+# References
+Documentation of amqplib
+https://www.squaremobius.net/amqp.node/channel_api.html 
+RabbitMQ tutorials
+https://www.rabbitmq.com/getstarted.html
