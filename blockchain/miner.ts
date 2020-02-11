@@ -1,4 +1,7 @@
-import {connectToQueue} from './index'
+import {connectToBroker} from './index'
+import uuidv1 from 'uuid/v1'
+import dotenv from 'dotenv'
+dotenv.config()
 
 async function startWorker(amqpConn: any){
     amqpConn.createChannel(function(err:any, ch:any) {
@@ -9,22 +12,28 @@ async function startWorker(amqpConn: any){
         ch.on("close", function() {
           console.log("[AMQP] channel closed");
         });
-    
-        ch.prefetch(10);
-        ch.assertQueue("jobs", { durable: true }, function(err:any, _ok:any) {
+
+        const QUEUE_NAME = process.env.QUEUE_NAME?process.env.QUEUE_NAME+'_'+idMiner:idMiner
+        //Creates the exchange if it doesnt exists
+        ch.assertExchange(process.env.EXCHANGE_NAME, 'fanout', {durable: false}) 
+        const exp_time = process.env.EXPIRE_MESSAGE_TIME?+process.env.EXPIRE_MESSAGE_TIME:20000
+        ch.assertQueue(QUEUE_NAME, { durable: false,
+            arguments: {'x-message-ttl': exp_time} },
+            function(err:any, _ok:any) {
           //if (closeOnErr(err)) return;
-          ch.consume("hello", processMsg(ch), { noAck: false })
-        });
-      });
+          ch.consume("", processMsg(ch), { noAck: false })
+        })
+        ch.bindQueue(QUEUE_NAME, process.env.EXCHANGE_NAME, '');
+      })
 }
 
 const processMsg = (ch:any) => (msg: string) => {
     work(msg, function(ok: any) {
       try {
         if (ok)
-          ch.ack(msg);
+          ch.ack(msg)
         else
-          ch.reject(msg, true);
+          ch.reject(msg, true)
       } catch (e) {
         //closeOnErr(e);
       }
@@ -32,9 +41,10 @@ const processMsg = (ch:any) => (msg: string) => {
 }
 
 function work(msg: any, cb: any) {
-    console.log("PDF processing of ", msg.content.toString());
+    console.log("Message read: ", msg.content.toString());
     cb(true);
 }
 
-console.log('Started miner')
-connectToQueue(startWorker)
+const idMiner = uuidv1()
+console.log('Started miner: ' + idMiner)
+connectToBroker(startWorker)

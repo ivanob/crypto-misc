@@ -5,7 +5,9 @@ dotenv.config()
 
 const reconnectTime = 20000
 
-async function connectToQueue(action: (conn:any)=>{}) {
+/* This function will create a connection to the broker and use
+that connection to execute the function passed as parameter */
+async function connectToBroker(action: (conn:any)=>{}) {
     const connectQueue: any = util.promisify(amqp.connect)
     connectQueue(process.env.AMQP_URL + '?heartbeat=60').then(
       (conn: any) => {
@@ -16,7 +18,7 @@ async function connectToQueue(action: (conn:any)=>{}) {
         })
         conn.on("close", function() {
           console.error("[AMQP] reconnecting");
-          return setTimeout(connectToQueue, reconnectTime);
+          return setTimeout(connectToBroker, reconnectTime);
         })
         console.log("[AMQP] connected")
         action(conn)
@@ -24,4 +26,4 @@ async function connectToQueue(action: (conn:any)=>{}) {
     )
 }
 
-export {connectToQueue}
+export {connectToBroker}

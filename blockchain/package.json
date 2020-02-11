@@ -12,8 +12,10 @@
   "license": "ISC",
   "dependencies": {
     "@types/amqplib": "^0.5.13",
+    "@types/uuid": "^3.4.7",
     "amqplib": "^0.5.5",
     "dotenv": "^8.2.0",
-    "typescript": "^3.7.5"
+    "typescript": "^3.7.5",
+    "uuid": "^3.4.0"
   }
 }

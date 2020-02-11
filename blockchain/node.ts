@@ -1,4 +1,6 @@
-import {connectToQueue} from './index'
+import {connectToBroker} from './index'
+import dotenv from 'dotenv'
+dotenv.config()
 
 async function startPublisher(amqpConn: any){
     amqpConn.createChannel(async function(err: any, ch: any) {
@@ -9,14 +11,18 @@ async function startPublisher(amqpConn: any){
         ch.on("close", function() {
           console.log("[AMQP] channel closed");
         })
+        //It creates the exchange (if doenst exists already) in fanout (broadcast) policy
+        ch.assertExchange(process.env.EXCHANGE_NAME, 'fanout', {durable: false})
         while (true) {
-          /*var [exchange, routingKey, content] = offlinePubQueue.shift()
-          //publish(exchange, routingKey, content)
-          publish('amq.direct', 'b', new Buffer('abcd'))*/
-           ch.sendToQueue('hello', new Buffer('message'))
-           console.log('Message published!')
-           await sleep(2000);
-        }
+            //It publishes a message to the exchange, that will be redirected to the queues
+            ch.publish(process.env.EXCHANGE_NAME, '', new Buffer('message'))
+            //ch.sendToQueue(process.env.QUEUE_NAME_NETWORK+'.*', new Buffer('message'))
+            console.log('Message published!')
+            await sleep(3000)
+          }
+        //})
+           
+           
       });
 }
 
@@ -45,4 +51,4 @@ function sleep(ms: number) {
   }*/
 
 console.log('Started node')
-connectToQueue(startPublisher)
+connectToBroker(startPublisher)
